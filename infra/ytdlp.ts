@@ -10,16 +10,20 @@ import {
   VideoUnavailableError,
   YtDlpFailedError,
 } from "infra/errors";
+// TS: `import type` traz só o tipo `RawYtDlpVideo`, que não existe em tempo de execução.
 import type { RawYtDlpVideo } from "models/format";
 
 const MAX_STDOUT_BYTES = 32 * 1024 * 1024;
 const MAX_STDERR_BYTES = 64 * 1024;
 const KILL_GRACE_MS = 3000;
 
+// TS: união `|` de dois formatos de objeto. O campo `type` com texto literal (`"audio"`) diz qual deles é.
 export type Selection = { type: "audio" } | { type: "video"; formatId: string };
 
+// TS: `type` cria um apelido para um formato de objeto. Só existe na checagem.
 type RunOptions = {
   timeoutMs: number;
+  // TS: `AbortSignal` é um tipo global (padrão web, também no Node) usado para cancelamento. `?:` deixa o campo opcional.
   signal?: AbortSignal;
   binary?: string;
 };
@@ -30,12 +34,15 @@ type RunResult = {
 };
 
 type BaseOptions = {
+  // TS: união `string | null`: texto ou null.
   cookiesPath?: string | null;
   signal?: AbortSignal;
 };
 
 // Único ponto que executa o binário: sempre spawn(bin, args[]), nunca shell.
+// TS: `string[]` é um array de textos. A desestrutura do segundo parâmetro é tipada com `RunOptions`.
 function run(args: string[], { timeoutMs, signal, binary }: RunOptions) {
+  // TS: `new Promise<RunResult>` é genérico: a promessa resolve com um `RunResult`.
   return new Promise<RunResult>((resolve, reject) => {
     if (signal?.aborted) {
       reject(abortError());
@@ -49,10 +56,13 @@ function run(args: string[], { timeoutMs, signal, binary }: RunOptions) {
       env: process.env,
     });
 
+    // TS: `Buffer` é o tipo do Node para dados binários; `Buffer[]` é um array deles.
     const stdoutChunks: Buffer[] = [];
     let stdoutBytes = 0;
     let stderr = "";
+    // TS: união com null: `failure` é um Error ou null. Testes como `if (failure)` estreitam o tipo.
     let failure: Error | null = null;
+    // TS: `NodeJS.Timeout` é um tipo do namespace global do Node. A união com null mostra que o timer pode não existir.
     let killTimer: NodeJS.Timeout | null = null;
 
     const timeoutTimer = setTimeout(() => {
@@ -68,6 +78,7 @@ function run(args: string[], { timeoutMs, signal, binary }: RunOptions) {
     const onAbort = () => stop(abortError());
     signal?.addEventListener("abort", onAbort, { once: true });
 
+    // TS: anotação de parâmetro de callback: `chunk` é um Buffer.
     child.stdout.on("data", (chunk: Buffer) => {
       stdoutBytes += chunk.length;
       if (stdoutBytes > MAX_STDOUT_BYTES) {
@@ -85,6 +96,7 @@ function run(args: string[], { timeoutMs, signal, binary }: RunOptions) {
       stderr = (stderr + chunk.toString("utf8")).slice(-MAX_STDERR_BYTES);
     });
 
+    // TS: `NodeJS.ErrnoException` é o tipo de erro do sistema, com a propriedade `code` (ex.: ENOENT).
     child.on("error", (error: NodeJS.ErrnoException) => {
       finish();
       if (error.code === "ENOENT") {
@@ -122,9 +134,11 @@ function run(args: string[], { timeoutMs, signal, binary }: RunOptions) {
     }
 
     // detached cria um grupo de processos; matar o grupo derruba também o ffmpeg.
+    // TS: `NodeJS.Signals` é uma união de nomes de sinais, como "SIGTERM"; só aceita esses textos.
     function killGroup(killSignal: NodeJS.Signals) {
       if (child.pid === undefined || child.exitCode !== null) return;
       try {
+        // TS: a checagem `child.pid === undefined` na linha de cima estreita o tipo: aqui `pid` é number.
         process.kill(-child.pid, killSignal);
       } catch {
         child.kill(killSignal);
@@ -133,7 +147,9 @@ function run(args: string[], { timeoutMs, signal, binary }: RunOptions) {
 
     function finish() {
       clearTimeout(timeoutTimer);
+      // TS: `if (killTimer)` estreita `Timeout | null` para `Timeout` dentro do if.
       if (killTimer) clearTimeout(killTimer);
+      // TS: `?.` é JavaScript: só chama se `signal` existir.
       signal?.removeEventListener("abort", onAbort);
     }
   });
@@ -147,11 +163,13 @@ function abortError() {
   });
 }
 
+// TS: `: Error` é o tipo de retorno. As classes de erro do projeto são subtipos dele.
 function errorFromStderr(stderr: string): Error {
   const lastError =
     stderr
       .split("\n")
       .filter((line) => line.startsWith("ERROR:"))
+      // TS: `pop()` pode devolver undefined (array vazio); o `||` cobre esse caso.
       .pop() || stderr.trim();
 
   if (/Unsupported URL/i.test(lastError)) {
@@ -177,6 +195,7 @@ function errorFromStderr(stderr: string): Error {
   return new YtDlpFailedError({ cause: lastError });
 }
 
+// TS: `cookiesPath?` é parâmetro opcional: pode ser omitido. Também pode receber null.
 function baseArgs(cookiesPath?: string | null) {
   const args = [
     "--ignore-config",
@@ -196,6 +215,7 @@ function baseArgs(cookiesPath?: string | null) {
 }
 
 // Versões para /api/v1/status; null quando o binário não responde.
+// TS: sem anotação de retorno; o TS infere o formato do objeto a partir do `return`.
 async function versions() {
   const [ytdlpVersion, ffmpegVersion] = await Promise.all([
     readVersion(["--version"]),
@@ -204,6 +224,7 @@ async function versions() {
 
   return {
     ytdlp: ytdlpVersion,
+    // TS: `?.` e `??` são JavaScript: `?.` para se o valor for null; `??` usa o valor da direita nesse caso.
     ffmpeg: ffmpegVersion?.match(/ffmpeg version (\S+)/)?.[1] ?? ffmpegVersion,
   };
 
@@ -217,6 +238,7 @@ async function versions() {
   }
 }
 
+// TS: `options: BaseOptions = {}` tem tipo e valor padrão; `{}` serve porque todos os campos são opcionais.
 async function inspect(url: string, options: BaseOptions = {}) {
   const args = [...baseArgs(options.cookiesPath), "-J", "--", url];
   const { stdout } = await run(args, {
@@ -225,7 +247,9 @@ async function inspect(url: string, options: BaseOptions = {}) {
   });
 
   try {
+    // TS: `as` afirma o tipo: `JSON.parse` devolve `any`, e o TS passa a tratar o resultado como `RawYtDlpVideo` sem validar.
     return JSON.parse(stdout) as RawYtDlpVideo;
+    // TS: no modo strict, o erro capturado é do tipo `unknown`; por isso ele só é repassado em `cause`.
   } catch (error) {
     throw new YtDlpFailedError({
       message: "O yt-dlp devolveu uma resposta inválida.",
@@ -241,9 +265,11 @@ export type DownloadedFile = {
   size: number;
 };
 
+// TS: `Promise<DownloadedFile>` no retorno diz o que a função async entrega quando termina.
 async function download(
   url: string,
   selection: Selection,
+  // TS: `&` é interseção: `options` precisa ter os campos de BaseOptions e também `directory`.
   options: BaseOptions & { directory: string },
 ): Promise<DownloadedFile> {
   const { maxDurationSeconds, maxFilesizeBytes, downloadTimeoutMs } =
@@ -291,6 +317,7 @@ async function download(
   }
 
   const stat = await fs.stat(filePath).catch(() => null);
+  // TS: `stat?.isFile()` só é verdadeiro se `stat` existir. Depois do `if`, o TS trata `stat` como não-null.
   if (!stat?.isFile()) {
     throw new YtDlpFailedError({
       message: "O yt-dlp terminou sem gerar o arquivo.",
@@ -318,6 +345,7 @@ function selectionArgs(selection: Selection) {
     ];
   }
 
+  // TS: união discriminada: o `if` com `type === "audio"` deixa só o formato de vídeo, que tem `formatId`.
   const id = selection.formatId;
   return [
     "-f",
@@ -331,11 +359,13 @@ function parsePrinted(stdout: string) {
   const lastLine = stdout.trim().split("\n").pop();
   if (!lastLine) return null;
   try {
+    // TS: `as` com tipo de objeto: afirma o formato esperado, mas os campos podem faltar, por isso são opcionais (`?:`).
     const value = JSON.parse(lastLine) as {
       title?: string;
       filepath?: string;
       ext?: string;
     };
+    // TS: o teste `value.filepath ?` estreita o tipo: dentro do ramo, `filepath` é string e não undefined.
     return value.filepath ? { ...value, filepath: value.filepath } : null;
   } catch {
     return null;

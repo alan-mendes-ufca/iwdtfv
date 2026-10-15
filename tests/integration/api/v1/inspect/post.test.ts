@@ -24,6 +24,7 @@ describe("POST to /api/v1/inspect", () => {
       });
       expect(response.status).toBe(200);
 
+      // TS: response.json() devolve any; o TS não checa os campos de responseBody.
       const responseBody = await response.json();
 
       expect(responseBody.title).toBe(
@@ -35,6 +36,7 @@ describe("POST to /api/v1/inspect", () => {
       expect(typeof responseBody.thumbnail_url).toBe("string");
 
       expect(
+        // TS: { quality: string } é um tipo inline que descreve só o campo usado; f recebe esse tipo.
         responseBody.formats.map((f: { quality: string }) => f.quality),
       ).toEqual([
         "2160p",
@@ -84,6 +86,7 @@ describe("POST to /api/v1/inspect", () => {
       ).toEqual(["720p", "576p"]);
     });
 
+    // TS: cada linha de test.each é uma tupla (rótulo, body); body pode ter tipos diferentes por linha.
     test.each([
       ["without body", undefined],
       ["with empty object", {}],

@@ -64,6 +64,7 @@ describe("validateRequest format_id schema", () => {
     ).toThrow(`"format_id" é um campo obrigatório.`);
   });
 
+  // TS: aqui cada item é um valor simples (string), não uma tupla; formatId é inferido como string.
   test.each(["137", "audio", "h264_540p_2240963-0", "hls-1080p"])(
     "Accepts %s",
     (formatId) => {

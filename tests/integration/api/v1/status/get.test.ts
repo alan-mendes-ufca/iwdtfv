@@ -12,6 +12,7 @@ describe("GET to /api/v1/status", () => {
       const response = await fetch(`${webserver.origin}/api/v1/status`);
       expect(response.status).toBe(200);
 
+      // TS: response.json() devolve any; o TS não checa os campos de responseBody.
       const responseBody = await response.json();
 
       const parsedUpdatedAt = new Date(responseBody.updated_at).toISOString();

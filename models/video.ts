@@ -1,14 +1,17 @@
 import config from "infra/config";
 import { ServicesError, ValidationError } from "infra/errors";
 import tempfiles from "infra/tempfiles";
+// TS: "{ type X }" dentro do import importa só o tipo Selection; some no JavaScript gerado.
 import ytdlp, { type Selection } from "infra/ytdlp";
 import format, { type RawYtDlpVideo, type VideoInfo } from "models/format";
 import provider from "models/provider";
 
 let activeDownloads = 0;
 
+// TS: Promise<VideoInfo> é genérico: a função é async e resolve para um VideoInfo.
 async function inspect(
   url: string,
+  // TS: "{ signal?: AbortSignal }" é tipo de objeto inline; signal é opcional. O "= {}" é o valor padrão.
   options: { signal?: AbortSignal } = {},
 ): Promise<VideoInfo> {
   const videoProvider = provider.findByUrl(url);
@@ -51,15 +54,18 @@ function assertDownloadable(raw: RawYtDlpVideo) {
   }
 }
 
+// TS: "export type" exporta o formato do resultado do download para outros arquivos. Some no JavaScript gerado.
 export type DownloadResult = {
   filePath: string;
   filename: string;
   contentType: string;
   size: number;
+  // TS: "() => Promise<void>" é tipo de função: não recebe nada e a promessa não devolve valor.
   cleanup: () => Promise<void>;
 };
 
 function parseSelection(formatId: string): Selection {
+  // TS: Selection é união discriminada: o campo "type" diz qual formato é. "audio" não tem formatId; "video" tem.
   return formatId === "audio" ? { type: "audio" } : { type: "video", formatId };
 }
 
@@ -106,6 +112,7 @@ async function download(
       cleanup,
     };
   } catch (error) {
+    // TS: em modo strict, o erro do catch é do tipo unknown; aqui ele só é repassado com throw, sem ser usado.
     await cleanup();
     throw error;
   }
@@ -131,6 +138,7 @@ function buildFilename(title: string, ext: string) {
 }
 
 function contentTypeFor(ext: string) {
+  // TS: Record<string, string> é um objeto com chaves e valores de texto. Com noUncheckedIndexedAccess, types[ext] pode ser undefined, por isso o "||".
   const types: Record<string, string> = {
     mp4: "video/mp4",
     webm: "video/webm",

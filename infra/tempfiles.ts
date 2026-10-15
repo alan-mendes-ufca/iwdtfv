@@ -7,30 +7,37 @@ const SWEEP_INTERVAL_MS = 10 * 60_000;
 
 let lastSweepAt = 0;
 
+// TS: `export type` exporta um apelido de tipo que descreve o formato do objeto. Some no JavaScript gerado.
 export type TempJob = {
   path: string;
+  // TS: `string | null` é união: o valor pode ser texto ou null. `Promise<...>` é genérico: diz o tipo do valor resolvido.
   copyCookies: (source: string | null) => Promise<string | null>;
+  // TS: `Promise<void>` é uma promessa que não resolve com um valor útil.
   cleanup: () => Promise<void>;
 };
 
+// TS: `: Promise<TempJob>` é o tipo de retorno: a função async entrega um TempJob.
 async function create(): Promise<TempJob> {
   const baseDir = config.get().tempDir;
   await fs.mkdir(baseDir, { recursive: true, mode: 0o700 });
   await sweepIfDue(baseDir);
 
   const jobPath = await fs.mkdtemp(path.join(baseDir, JOB_PREFIX));
+  // TS: variável com tipo declarado: guarda uma `Promise<void>` ou `null`, antes de existir.
   let cleanupPromise: Promise<void> | null = null;
 
   return {
     path: jobPath,
     copyCookies,
     cleanup() {
+      // TS: `??=` é JavaScript: atribui só se a variável for null ou undefined.
       cleanupPromise ??= fs.rm(jobPath, { recursive: true, force: true });
       return cleanupPromise;
     },
   };
 
   // O yt-dlp regrava o arquivo de cookies ao sair; cada job usa uma cópia.
+  // TS: sem anotação de retorno, o TS infere `Promise<string | null>` pelos `return` da função.
   async function copyCookies(source: string | null) {
     if (!source) return null;
     const destination = path.join(jobPath, "cookies.txt");
@@ -41,9 +48,11 @@ async function create(): Promise<TempJob> {
 }
 
 // Remove sobras de jobs interrompidos (ex.: processo morto no meio do download).
+// TS: `baseDir` não tem anotação; o tipo vem do valor padrão (string).
 async function sweepStale(baseDir = config.get().tempDir) {
   const maxAgeMs = config.get().downloadTimeoutMs * 2;
   const now = Date.now();
+  // TS: `string[]` é um array de textos. A variável é declarada aqui e preenchida dentro do try.
   let entries: string[];
 
   try {

@@ -1,14 +1,20 @@
+// TS: `type` cria um apelido para um formato de objeto. Só existe na checagem; some no JavaScript gerado.
 type ErrorParams = {
+  // TS: `?:` deixa a propriedade opcional: ela pode faltar no objeto.
   message?: string;
   action?: string;
+  // TS: `unknown` aceita qualquer valor, mas exige checagem antes de usar. Como é opcional, usa `?:`.
   cause?: unknown;
 };
 
+// TS: `abstract` marca uma classe que só serve de base: não pode ser instanciada direto, só estendida.
 abstract class PublicError extends Error {
+  // TS: campo de classe com tipo declarado. O valor é atribuído dentro do constructor.
   action: string;
   statusCode: number;
 
   constructor(
+    // TS: parâmetro desestruturado com tipo: `{ message, ... }` pega os campos e `: ErrorParams` diz o formato deles.
     { message, action, cause }: ErrorParams,
     defaults: {
       name: string;
@@ -34,6 +40,7 @@ abstract class PublicError extends Error {
 }
 
 export class InternalServerError extends PublicError {
+  // TS: tipo inline com `?:`, e valor padrão `= {}` também tipado: se nada for passado, usa um objeto vazio.
   constructor({ cause }: { cause?: unknown } = {}) {
     super(
       { cause },
@@ -129,6 +136,7 @@ export class TooManyRequestsError extends PublicError {
 }
 
 export class YtDlpFailedError extends PublicError {
+  // TS: `&` é interseção: o parâmetro precisa ter os campos de ErrorParams e também um `statusCode` opcional.
   constructor(params: ErrorParams & { statusCode?: number } = {}) {
     super(params, {
       name: "YtDlpFailedError",

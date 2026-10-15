@@ -5,6 +5,7 @@ import ytdlp from "infra/ytdlp";
 
 const FAKE_BINARY = path.resolve("tests/fakes/yt-dlp.ts");
 
+// TS: "let x: T;" declara o tipo de uma variável sem valor inicial; ela é preenchida no beforeEach.
 let workDir: string;
 let argsFile: string;
 
@@ -21,8 +22,10 @@ afterEach(() => {
   delete process.env.INSPECT_TIMEOUT_MS;
 });
 
+// TS: ": string[]" é o tipo de retorno (array de strings); JSON.parse devolve any, aceito sem checagem.
 function lastArgs(): string[] {
   const lines = fs.readFileSync(argsFile, "utf8").trim().split("\n");
+  // TS: at(-1) pode devolver undefined; o "!" afirma que existe, sem checagem em tempo de execução.
   return JSON.parse(lines.at(-1)!);
 }
 
@@ -55,6 +58,7 @@ describe("ytdlp.inspect", () => {
     ]);
   });
 
+  // TS: cada linha de test.each é uma tupla (url, name, statusCode); o TS infere o tipo de cada posição.
   test.each([
     ["https://youtu.be/private", "VideoUnavailableError", 404],
     ["https://youtu.be/unavailable", "VideoUnavailableError", 404],

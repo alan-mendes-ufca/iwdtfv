@@ -2,11 +2,14 @@ import os from "node:os";
 import path from "node:path";
 
 // Lido a cada chamada, para que testes possam trocar variáveis de ambiente.
+// TS: `name: string` anota o tipo do parâmetro; `: number` depois dos parênteses é o tipo do retorno.
 function readInteger(name: string, fallback: number): number {
+  // TS: `process.env[name]` é `string | undefined`; o `|| ""` garante um texto para o parseInt.
   const value = Number.parseInt(process.env[name] || "", 10);
   return Number.isFinite(value) && value > 0 ? value : fallback;
 }
 
+// TS: `get()` não tem anotação de retorno; o TS infere o formato do objeto pelos valores (ex.: `string | null` por causa do `|| null`).
 function get() {
   return {
     ytdlpBinary: process.env.YTDLP_BINARY || "yt-dlp",

@@ -1,5 +1,6 @@
 // Usa o yt-dlp real e a internet. Roda só com `npm run test:real`.
 import orchestrator from "tests/orchestrator";
+// TS: "import type" traz só o tipo VideoInfo; ele some no JavaScript gerado.
 import type { VideoInfo } from "models/format";
 
 const YOUTUBE_URL = "https://www.youtube.com/watch?v=jNQXAC9IVRw";
@@ -46,10 +47,12 @@ function isMp3(body: Buffer) {
   );
 }
 
+// TS: cada linha de each é uma tupla [string, string]; por isso platform e url já são string.
 describe.each([
   ["YouTube", YOUTUBE_URL],
   ["TikTok", TIKTOK_URL],
 ])("Download flow on %s", (platform, url) => {
+  // TS: "let x: T;" declara o tipo de uma variável sem valor inicial; ela é preenchida no primeiro teste.
   let info: VideoInfo;
 
   test("Lists the real qualities of the video", async () => {
@@ -61,6 +64,7 @@ describe.each([
   });
 
   test("Downloads the lowest quality as mp4", async () => {
+    // TS: at(-1) pode devolver undefined; o "!" (non-null) afirma que existe, sem checagem em execução.
     const lowest = info.formats.at(-1)!;
     const { response, body } = await download(url, lowest.format_id);
 

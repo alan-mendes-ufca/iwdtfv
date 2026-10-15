@@ -6,6 +6,7 @@ import webserver from "infra/webserver";
 async function waitForAllServices() {
   await waitForWebServer();
 
+  // TS: parâmetro com valor padrão recebe tipo inferido: maxRetries e maxTimeout são number.
   async function waitForWebServer(maxRetries = 100, maxTimeout = 1000) {
     return retry(fetchStatusPage, {
       retries: maxRetries,
@@ -21,11 +22,13 @@ async function waitForAllServices() {
 
 // TEMP_DIR é o mesmo para o servidor e o Jest (definido no script `npm test`).
 function getTempDir() {
+  // TS: process.env.X é string | undefined; o if com throw estreita o tipo para string.
   const tempDir = process.env.TEMP_DIR;
   if (!tempDir) throw new Error("TEMP_DIR precisa estar definido nos testes.");
   return tempDir;
 }
 
+// TS: sem anotação de retorno, o TS infere string[] (readdirSync e o [] do catch).
 function listTempJobs() {
   try {
     return fs
@@ -53,6 +56,7 @@ async function waitForNoTempJobs(timeoutMs = 8000) {
   return listTempJobs();
 }
 
+// TS: "unknown" aceita qualquer valor em body. RequestInit é o tipo das opções do fetch.
 function postJson(endpoint: string, body: unknown, init: RequestInit = {}) {
   return fetch(`${webserver.origin}${endpoint}`, {
     method: "POST",

@@ -5,6 +5,7 @@ import video from "models/video";
 
 const FAKE_BINARY = path.resolve("tests/fakes/yt-dlp.ts");
 
+// TS: "let x: T;" declara o tipo de uma variável sem valor inicial; aqui é string.
 let tempDir: string;
 
 beforeEach(() => {
@@ -78,7 +79,9 @@ describe("video.inspect", () => {
 
     await video.inspect("https://youtu.be/abc");
 
+    // TS: a anotação string[] vale para JSON.parse, que devolve any; o TS aceita sem checar o conteúdo.
     const args: string[] = JSON.parse(fs.readFileSync(argsFile, "utf8"));
+    // TS: com noUncheckedIndexedAccess, args[i] é string | undefined; o "!" afirma que existe.
     const cookiesArg = args[args.indexOf("--cookies") + 1]!;
     expect(cookiesArg).not.toBe(cookiesFile);
     expect(path.basename(cookiesArg)).toBe("cookies.txt");

@@ -1,11 +1,17 @@
 import Joi from "joi";
 import { ValidationError } from "infra/errors";
 
+// TS: "required" | "optional" é união de textos literais: só esses dois valores são aceitos.
 type Requirement = "required" | "optional";
+// TS: "typeof schemas" pega o tipo do objeto schemas; "keyof" vira a união das suas chaves ("url" | "format_id").
 type SchemaKey = keyof typeof schemas;
+// TS: Record<K, V> cria um objeto com chaves K e valores V. Partial<T> torna todas as chaves de T opcionais.
 type Keys = Partial<Record<SchemaKey, Requirement>>;
 
+// TS: <T extends Record<string, unknown>> é genérico: T é escolhido em cada chamada e precisa ser um objeto.
+// TS: O ": T" depois dos parênteses é o tipo de retorno; ex.: validateRequest<{ url: string }>(...) devolve esse formato.
 export default function validateRequest<T extends Record<string, unknown>>(
+  // TS: "unknown" aceita qualquer valor de entrada, mas o TS não deixa usá-lo sem antes checar ou converter.
   object: unknown,
   keys: Keys,
 ): T {
@@ -17,7 +23,9 @@ export default function validateRequest<T extends Record<string, unknown>>(
     "any.required": "Corpo da requisição é obrigatório.",
   });
 
+  // TS: "as" é asserção: diz ao TS que Object.keys(...) é um array de SchemaKey. Não converte nada em tempo de execução.
   for (const key of Object.keys(keys) as SchemaKey[]) {
+    // TS: como key é SchemaKey, schemas[key] é uma chave válida e o TS confere isso.
     finalSchema = finalSchema.concat(schemas[key]());
   }
 
@@ -33,6 +41,7 @@ export default function validateRequest<T extends Record<string, unknown>>(
       message: error.details[0]?.message,
     });
   }
+  // TS: "as T" força o tipo do retorno. O TS não conhece o formato validado pelo Joi; é uma promessa, não uma checagem.
   return value as T;
 
   function normalizeJsonObject(object: unknown) {
@@ -49,6 +58,7 @@ export default function validateRequest<T extends Record<string, unknown>>(
   }
 }
 
+// TS: sem anotação: o TS infere o tipo de schemas a partir dos métodos abaixo; por isso typeof e keyof funcionam.
 const schemas = {
   url: function () {
     return Joi.object({

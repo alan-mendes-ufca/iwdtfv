@@ -14,6 +14,7 @@ describe("POST to /api/v1/status", () => {
       });
       expect(response.status).toBe(405);
 
+      // TS: response.json() devolve any; o TS não checa os campos de responseBody.
       const responseBody = await response.json();
 
       expect(responseBody).toEqual({

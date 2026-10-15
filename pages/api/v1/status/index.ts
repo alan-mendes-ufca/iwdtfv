@@ -1,5 +1,7 @@
 import { createRouter } from "next-connect";
+// TS: "import type" importa só o tipo NextApiResponse; some no JavaScript gerado.
 import type { NextApiResponse } from "next";
+// TS: "{ type ApiRequest }" importa só o tipo, misturado com o import normal da função controller.
 import controller, { type ApiRequest } from "infra/controller";
 import ytdlp from "infra/ytdlp";
 
@@ -7,6 +9,7 @@ export const config = {
   runtime: "nodejs",
 };
 
+// TS: <ApiRequest, NextApiResponse> são genéricos: informam os tipos de request e response usados pelo router.
 export default createRouter<ApiRequest, NextApiResponse>()
   .get(
     controller.logRequest("status.fetched", "Status consultado com sucesso."),

@@ -1,5 +1,6 @@
 import youtubeFixture from "tests/fixtures/youtube-video.json";
 import tiktokFixture from "tests/fixtures/tiktok-video.json";
+// TS: RawYtDlpFormat, RawYtDlpVideo e VideoFormat são tipos num import comum; o TS os apaga na saída.
 import format, {
   normalize,
   RawYtDlpFormat,
@@ -7,9 +8,11 @@ import format, {
   VideoFormat,
 } from "models/format";
 
+// TS: "as RawYtDlpVideo" é asserção: o JSON importado é tratado como esse tipo, sem checagem.
 const youtube = youtubeFixture as RawYtDlpVideo;
 const tiktok = tiktokFixture as RawYtDlpVideo;
 
+// TS: VideoFormat[] é array de VideoFormat; find devolve VideoFormat | undefined, inferido sem anotar.
 function findQuality(formats: VideoFormat[], quality: string) {
   return formats.find((f) => f.quality === quality);
 }
@@ -115,6 +118,7 @@ describe("format.normalize", () => {
   });
 
   describe("With a format without filesize", () => {
+    // TS: a anotação RawYtDlpFormat faz o TS checar os campos deste objeto (nome errado vira erro).
     const videoOnly: RawYtDlpFormat = {
       format_id: "v",
       vcodec: "avc1.640028",

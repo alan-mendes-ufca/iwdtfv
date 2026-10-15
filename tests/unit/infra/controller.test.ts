@@ -1,3 +1,4 @@
+// TS: "import type" traz só o tipo NextApiRequest; ele some no JavaScript gerado.
 import type { NextApiRequest } from "next";
 import controller from "infra/controller";
 
@@ -43,10 +44,12 @@ describe("controller.getClientIp", () => {
     else process.env.TRUST_PROXY = originalTrustProxy;
   });
 
+  // TS: Record<K, V> é um objeto com chaves K e valores V; "string | string[]" aceita um valor ou uma lista.
   function buildRequest(headers: Record<string, string | string[]>) {
     return {
       headers,
       socket: { remoteAddress: "10.0.0.1" },
+      // TS: "as unknown as X" é asserção dupla: força o tipo de um objeto parcial; nada é checado na execução.
     } as unknown as NextApiRequest;
   }
 

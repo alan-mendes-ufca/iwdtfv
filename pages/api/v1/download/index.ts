@@ -1,7 +1,9 @@
 import fs from "node:fs";
 import { pipeline } from "node:stream/promises";
 import { createRouter } from "next-connect";
+// TS: "import type" importa só o tipo NextApiResponse; some no JavaScript gerado.
 import type { NextApiResponse } from "next";
+// TS: "{ type ApiRequest }" importa só o tipo, misturado com o import normal da função controller.
 import controller, { type ApiRequest } from "infra/controller";
 import validateRequest from "models/validateRequest";
 import video from "models/video";
@@ -14,6 +16,7 @@ export const config = {
   },
 };
 
+// TS: <ApiRequest, NextApiResponse> são genéricos: informam os tipos de request e response usados pelo router.
 export default createRouter<ApiRequest, NextApiResponse>()
   .post(
     controller.logRequest("video.downloaded", "Vídeo baixado com sucesso."),
@@ -26,8 +29,10 @@ export default createRouter<ApiRequest, NextApiResponse>()
 function postValidationHandler(
   request: ApiRequest,
   response: NextApiResponse,
+  // TS: "() => unknown" é tipo de função: não recebe argumentos e devolve algo de tipo unknown.
   next: () => unknown,
 ) {
+  // TS: <{ url: string; format_id: string }> passa um tipo de objeto como argumento do genérico de validateRequest.
   const cleanValues = validateRequest<{ url: string; format_id: string }>(
     request.body,
     {
@@ -42,6 +47,7 @@ function postValidationHandler(
 }
 
 async function postHandler(request: ApiRequest, response: NextApiResponse) {
+  // TS: "as" é asserção: diz ao TS o formato de request.body, que o Next tipa como any. Não há checagem em tempo de execução.
   const { url, format_id } = request.body as {
     url: string;
     format_id: string;

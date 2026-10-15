@@ -1,7 +1,9 @@
 // Contrato do normalizador. A implementação de normalize() fica neste arquivo.
 
+// TS: "export type" exporta um apelido de tipo. Só existe na checagem; some no JavaScript gerado.
 export type RawYtDlpFormat = {
   format_id: string;
+  // TS: "campo?: tipo" marca a propriedade como opcional. "string | null" é uma união: texto ou null.
   ext?: string | null;
   vcodec?: string | null;
   acodec?: string | null;
@@ -26,6 +28,7 @@ export type RawYtDlpVideo = {
   is_live?: boolean | null;
   live_status?: string | null;
   _type?: string | null;
+  // TS: "RawYtDlpFormat[]" é um array tipado: lista só de objetos desse tipo.
   formats?: RawYtDlpFormat[] | null;
 };
 
@@ -49,11 +52,14 @@ export type VideoInfo = {
   audio_available: boolean;
 };
 
+// TS: ": tipo" depois do parâmetro é a anotação; ": boolean" depois dos parênteses é o tipo de retorno.
+// TS: "undefined" é um tipo próprio; a união "string | null | undefined" aceita os três casos.
 function hasCodec(codec: string | null | undefined): boolean {
   return codec !== null && codec !== undefined && codec !== "none";
 }
 
 function tbrOf(format: RawYtDlpFormat): number {
+  // TS: "??" é JavaScript, não TS: usa 0 quando o valor é null ou undefined.
   return format.tbr ?? 0;
 }
 
@@ -64,6 +70,7 @@ function isStoryboard(format: RawYtDlpFormat): boolean {
 function isVideoCandidate(format: RawYtDlpFormat): boolean {
   return (
     hasCodec(format.vcodec) &&
+    // TS: typeof dentro do && estreita o tipo: depois dele, height é só number, então "> 0" é aceito.
     typeof format.height === "number" &&
     format.height > 0 &&
     !isStoryboard(format)
@@ -96,6 +103,7 @@ function isPreferred(a: RawYtDlpFormat, b: RawYtDlpFormat): boolean {
 }
 
 // Em empate, mantém o primeiro da lista (comparação estrita).
+// TS: Map<number, RawYtDlpFormat> é um tipo genérico: a chave é number e o valor é RawYtDlpFormat.
 function pickBestPerQuality(
   candidates: RawYtDlpFormat[],
 ): Map<number, RawYtDlpFormat> {
@@ -112,9 +120,11 @@ function pickBestPerQuality(
 
 // Formato só-áudio (acodec presente, vcodec ausente) com maior tbr.
 function pickBestAudio(formats: RawYtDlpFormat[]): RawYtDlpFormat | null {
+  // TS: "let best: X | null = null" declara variável que pode ficar null; o TS exige checar antes de usar.
   let best: RawYtDlpFormat | null = null;
   for (const format of formats) {
     if (!hasCodec(format.acodec) || hasCodec(format.vcodec)) continue;
+    // TS: "!best ||" estreita o tipo: no lado direito do ||, best já não pode ser null.
     if (!best || tbrOf(format) > tbrOf(best)) best = format;
   }
   return best;
@@ -163,12 +173,14 @@ function toVideoFormat(
   };
 }
 
+// TS: "export function" exporta a função. Os tipos dos parâmetros e o ": VideoInfo" no fim são anotações.
 export function normalize(raw: RawYtDlpVideo, platform: string): VideoInfo {
   const rawFormats = raw.formats ?? [];
   const duration = typeof raw.duration === "number" ? raw.duration : null;
   const audio = pickBestAudio(rawFormats);
   const best = pickBestPerQuality(rawFormats.filter(isVideoCandidate));
 
+  // TS: sem anotação aqui: o TS infere os tipos de quality e format a partir do Map best.
   const formats = [...best.entries()]
     .sort(([a], [b]) => b - a)
     .map(([quality, format]) =>

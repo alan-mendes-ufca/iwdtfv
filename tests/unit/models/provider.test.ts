@@ -2,6 +2,7 @@ import provider from "models/provider";
 
 describe("provider.findByUrl", () => {
   describe("With supported platforms", () => {
+    // TS: cada linha de test.each é uma tupla (url, name); o TS infere (url, name) como string.
     test.each([
       ["https://www.youtube.com/watch?v=dQw4w9WgXcQ", "youtube"],
       ["https://youtu.be/dQw4w9WgXcQ", "youtube"],
@@ -80,6 +81,7 @@ describe("provider.findByUrl", () => {
 
 describe("provider.matches", () => {
   test("With matching and non-matching URLs", () => {
+    // TS: find() devolve item | undefined; o "!" afirma que o YouTube existe, sem checagem em execução.
     const youtube = provider.all.find((item) => item.name === "youtube")!;
 
     expect(provider.matches(youtube, "https://youtu.be/abc")).toBe(true);

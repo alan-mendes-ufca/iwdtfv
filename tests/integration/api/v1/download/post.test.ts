@@ -27,6 +27,7 @@ describe("POST to /api/v1/download", () => {
       expect(response.headers.get("content-length")).toBe("262144");
       expect(response.headers.get("cache-control")).toBe("no-store");
 
+      // TS: headers.get() devolve string | null; o "||" com texto vazio garante string.
       const disposition = response.headers.get("content-disposition") || "";
       expect(disposition).toMatch(/^attachment; filename="[^"]+\.mp4"; /);
       expect(disposition).toContain("filename*=UTF-8''");
@@ -70,6 +71,7 @@ describe("POST to /api/v1/download", () => {
       expect(body.length).toBe(262144);
     });
 
+    // TS: cada linha de test.each é uma tupla (rótulo, extra); o TS infere o tipo de cada posição.
     test.each([
       ["with yt-dlp selector syntax", { format_id: "137+bestaudio" }],
       ["with option-like value", { format_id: "--exec" }],
@@ -82,6 +84,7 @@ describe("POST to /api/v1/download", () => {
       });
       expect(response.status).toBe(400);
 
+      // TS: response.json() devolve any; o TS não checa os campos de responseBody.
       const responseBody = await response.json();
       expect(responseBody.name).toBe("ValidationError");
       expect(responseBody.action).toBe("Verifique os dados enviados.");

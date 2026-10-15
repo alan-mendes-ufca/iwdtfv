@@ -1,4 +1,5 @@
 import crypto from "node:crypto";
+// TS: `import type` traz só o tipo, que some no JavaScript gerado.
 import type { NextApiRequest, NextApiResponse } from "next";
 import config from "infra/config";
 import {
@@ -15,12 +16,16 @@ import {
 import rateLimitStore from "infra/rateLimit";
 import logger from "models/logger";
 
+// TS: `export type` exporta um apelido de tipo. `&` é interseção: junta os campos de NextApiRequest com os de `context`.
 export type ApiRequest = NextApiRequest & {
+  // TS: `?:` torna a propriedade opcional: ela pode não existir.
   context?: {
     request_id?: string;
   };
 };
 
+// TS: tipo de função (sem parâmetros), que devolve uma Promise ou um valor. `Promise<T>` é genérico: o T é o tipo do valor resolvido.
+// TS: `unknown` aceita qualquer valor, mas exige checagem antes de usar.
 type Next = () => Promise<unknown> | unknown;
 
 const ignoredPaths = ["/api/v1/status"];
@@ -35,6 +40,7 @@ const publicErrors = [
   ServicesError,
 ];
 
+// TS: parâmetros com anotação: ApiRequest é o tipo local e NextApiResponse é o tipo da resposta vindo do pacote next.
 function onNoMatchHandler(request: ApiRequest, response: NextApiResponse) {
   const publicErrorObject = new MethodNotAllowedError();
   response.status(publicErrorObject.statusCode).json(publicErrorObject);
@@ -45,6 +51,9 @@ function onErrorHandler(
   request: ApiRequest,
   response: NextApiResponse,
 ) {
+  // TS: `error instanceof type` verifica se o erro é instância da classe. O `some` não estreita o tipo de `error`, por isso usamos `as` abaixo.
+  // TS: `as` é asserção: afirma um tipo ao compilador, sem converter nada em tempo de execução.
+  // TS: `InstanceType<T>` é tipo utilitário (tipo da instância de uma classe). `(typeof x)[number]` pega o tipo de um item do array.
   const publicErrorObject = publicErrors.some((type) => error instanceof type)
     ? (error as InstanceType<(typeof publicErrors)[number]>)
     : new InternalServerError({ cause: error });
@@ -60,6 +69,7 @@ function onErrorHandler(
   return response.status(publicErrorObject.statusCode).json(publicErrorObject);
 }
 
+// TS: `event` e `message` são textos. A função devolve outra função, que é o middleware.
 function logRequest(event: string, message: string) {
   return function log(
     request: ApiRequest,
@@ -70,6 +80,7 @@ function logRequest(event: string, message: string) {
     response.setHeader("request_id", requestId);
 
     request.context = {
+      // TS: `...` é spread, JavaScript puro: copia as propriedades do objeto existente.
       ...request.context,
       request_id: requestId,
     };
@@ -92,6 +103,7 @@ function logRequest(event: string, message: string) {
 
 function logRequestError(
   request: ApiRequest,
+  // TS: tipo de objeto escrito direto na anotação: exige essas três propriedades.
   publicError: { name: string; message: string; statusCode: number },
   originalError: unknown,
 ) {
@@ -118,9 +130,12 @@ function logRequestError(
   }
 }
 
+// TS: aqui basta o tipo NextApiRequest do pacote next, sem o campo `context` de ApiRequest.
 function getClientIp(request: NextApiRequest) {
   if (config.get().trustProxy) {
     const forwardedFor = request.headers["x-forwarded-for"];
+    // TS: `Array.isArray` estreita o tipo: no ramo verdadeiro, o TS sabe que `forwardedFor` é um array.
+    // TS: `?.` é JavaScript: só continua se o valor não for null ou undefined.
     const first = (Array.isArray(forwardedFor) ? forwardedFor[0] : forwardedFor)
       ?.split(",")[0]
       ?.trim();
@@ -129,6 +144,7 @@ function getClientIp(request: NextApiRequest) {
   return request.socket.remoteAddress || "unknown";
 }
 
+// TS: `"inspect" | "download"` é tipo literal: só aceita esses dois textos exatos.
 function rateLimit(name: "inspect" | "download") {
   return function rateLimitMiddleware(
     request: ApiRequest,

@@ -3,6 +3,7 @@ import os from "node:os";
 import path from "node:path";
 import tempfiles from "infra/tempfiles";
 
+// TS: "let x: T;" declara o tipo de uma variável sem valor inicial; aqui é string.
 let tempDir: string;
 
 beforeEach(() => {
@@ -34,6 +35,7 @@ describe("tempfiles.create", () => {
     const copy = await job.copyCookies(source);
 
     expect(copy).toBe(path.join(job.path, "cookies.txt"));
+    // TS: "copy!" (non-null) afirma que o valor não é null, sem checagem em tempo de execução.
     expect(fs.readFileSync(copy!, "utf8")).toBe("cookie");
     expect(fs.statSync(copy!).mode & 0o777).toBe(0o600);
     await job.cleanup();

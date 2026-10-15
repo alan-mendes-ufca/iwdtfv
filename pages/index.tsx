@@ -1,28 +1,38 @@
 import Head from "next/head";
+// TS: "type X" no import traz só o tipo (CSSProperties, FormEvent) e some na execução.
 import { useRef, useState, type CSSProperties, type FormEvent } from "react";
+// TS: "import type" traz só tipos: nada deste import existe no JavaScript final.
 import type { VideoFormat, VideoInfo } from "models/format";
 
+// TS: com const, o TS infere o tipo literal (esse texto exato), mais restrito que string.
 const SERVER_ERROR_MESSAGE = "Não foi possível falar com o servidor.";
 const AUDIO_FORMAT_ID = "audio";
 
+// TS: "type" cria um apelido de tipo. "string | null" é uma união: texto ou null.
 type ApiError = { message: string; action: string | null };
 type InspectedVideo = { sourceUrl: string; video: VideoInfo };
+// TS: "?" torna o campo opcional; "unknown" aceita qualquer valor, mas exige checagem antes de usar.
 type ErrorBody = { message: string; action?: unknown };
 
 export default function Home() {
+  // TS: sem <T>, o TS infere o tipo pelo valor inicial: useState("") vira string.
   const [inputUrl, setInputUrl] = useState("");
   const [inspecting, setInspecting] = useState(false);
+  // TS: <InspectedVideo | null> é um genérico: o estado guarda um InspectedVideo ou null.
   const [inspected, setInspected] = useState<InspectedVideo | null>(null);
   const [error, setError] = useState<ApiError | null>(null);
   const [downloading, setDownloading] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
+  // TS: useRef<T> guarda um valor sem causar nova renderização; aqui é um AbortController ou null.
   const downloadRef = useRef<AbortController | null>(null);
 
+  // TS: FormEvent<HTMLFormElement> é o tipo do evento de submit; o genérico diz qual form o gerou.
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (inspecting) return;
     const url = inputUrl.trim();
 
+    // TS: current pode ser null, então o TS obriga o ?. antes de abort(). "?." é JavaScript, não TS.
     downloadRef.current?.abort();
     downloadRef.current = null;
     setDownloading(false);
@@ -41,6 +51,7 @@ export default function Home() {
         setError(await readError(response));
         return;
       }
+      // TS: "as VideoInfo" é uma asserção: você garante o tipo ao TS; nada é checado em tempo de execução.
       const video = (await response.json()) as VideoInfo;
       setInspected({ sourceUrl: url, video });
     } catch {
@@ -93,6 +104,7 @@ export default function Home() {
     downloadRef.current?.abort();
   }
 
+  // TS: sem anotação, o TS infere VideoFormat[]. "?." e "??" são JavaScript, não TS.
   const formats = inspected?.video.formats ?? [];
   const audioAvailable = inspected?.video.audio_available ?? false;
   const hasOptions = formats.length > 0 || audioAvailable;
@@ -357,6 +369,7 @@ export default function Home() {
   );
 }
 
+// TS: "totalSeconds: number" anota o parâmetro; ": string" é o tipo de retorno.
 function formatDuration(totalSeconds: number): string {
   const seconds = Math.round(totalSeconds);
   const hours = Math.floor(seconds / 3600);
@@ -381,8 +394,10 @@ function formatBytes(bytes: number): string {
   return `${value.toLocaleString("pt-BR", { maximumFractionDigits })} ${unit}`;
 }
 
+// TS: "VideoFormat" é o tipo do parâmetro; "string[]" é um array só de strings.
 function formatDetails(format: VideoFormat): string[] {
   const details: string[] = [];
+  // TS: "!== null" estreita o tipo: fps é number | null e, dentro do if, vira number.
   if (format.fps !== null && format.fps > 30) {
     details.push(`${format.fps} fps`);
   }
@@ -392,9 +407,11 @@ function formatDetails(format: VideoFormat): string[] {
   return details;
 }
 
+// TS: "string | null" é união: o cabeçalho pode faltar. A função sempre devolve string.
 function filenameFromDisposition(header: string | null): string {
   if (!header) return "download";
 
+  // TS: exec() devolve RegExpExecArray | null; o TS obriga a checar null antes de usar.
   const extended = /filename\*=UTF-8''([^;]+)/i.exec(header);
   const extendedValue = extended?.[1] ? decodeSafe(extended[1].trim()) : null;
   if (extendedValue) return extendedValue;
@@ -405,6 +422,7 @@ function filenameFromDisposition(header: string | null): string {
   return "download";
 }
 
+// TS: "string | null" indica que a função pode devolver null (quando a decodificação falha).
 function decodeSafe(value: string): string | null {
   try {
     return decodeURIComponent(value);
@@ -413,16 +431,20 @@ function decodeSafe(value: string): string | null {
   }
 }
 
+// TS: "value is ErrorBody" é um type guard: se der true, o TS trata value como ErrorBody.
 function isErrorBody(value: unknown): value is ErrorBody {
   return (
     typeof value === "object" &&
     value !== null &&
+    // TS: "in" e typeof estreitam unknown: só depois dessas checagens value.message pode ser lido.
     "message" in value &&
     typeof value.message === "string"
   );
 }
 
+// TS: Promise<ApiError> é o tipo de retorno de uma função async; quem chama usa await.
 async function readError(response: Response): Promise<ApiError> {
+  // TS: response.json() devolve any; a anotação unknown obriga a checar o tipo antes de usar.
   const body: unknown = await response.json().catch(() => null);
   if (isErrorBody(body)) {
     return {
@@ -433,6 +455,7 @@ async function readError(response: Response): Promise<ApiError> {
   return { message: SERVER_ERROR_MESSAGE, action: null };
 }
 
+// TS: ": void" indica que a função não devolve valor. "Blob" é um tipo do DOM (arquivo binário).
 function saveBlob(blob: Blob, filename: string): void {
   const objectUrl = URL.createObjectURL(blob);
   const link = document.createElement("a");
@@ -445,6 +468,7 @@ function saveBlob(blob: Blob, filename: string): void {
   setTimeout(() => URL.revokeObjectURL(objectUrl), 60_000);
 }
 
+// TS: "satisfies" confere que o objeto segue Record<string, CSSProperties> e mantém os tipos literais.
 const styles = {
   page: {
     minHeight: "100vh",

@@ -1,13 +1,17 @@
 import net from "node:net";
 import { UnsupportedPlatformError, ValidationError } from "infra/errors";
 
+// TS: "export type" exporta o formato Provider. Só existe na checagem; some no JavaScript gerado.
 export type Provider = {
+  // TS: "youtube" | "x" | ... são tipos literais: name só aceita esses quatro textos exatos.
   name: "youtube" | "x" | "tiktok" | "instagram";
   label: string;
+  // TS: "string[]" é um array de textos.
   hosts: string[];
 };
 
 // Allowlist de hosts por plataforma. Comparação exata, sem subdomínios curinga.
+// TS: ": Provider[]" anota a variável: um array só com objetos do formato Provider.
 const providers: Provider[] = [
   {
     name: "youtube",
@@ -47,7 +51,9 @@ const providers: Provider[] = [
 const BLOCKED_HOSTNAMES = ["localhost", "localhost.localdomain"];
 const BLOCKED_SUFFIXES = [".localhost", ".local", ".internal", ".lan", ".home"];
 
+// TS: sem tipo de retorno escrito: o TS infere { url, hostname } a partir do return no fim.
 function parseUrl(rawUrl: string) {
+  // TS: "let url: URL;" declara a variável com tipo e sem valor inicial. O TS confere que ela recebe valor antes do uso.
   let url: URL;
   try {
     url = new URL(rawUrl);
@@ -106,10 +112,12 @@ function matches(provider: Provider, rawUrl: string) {
   }
 }
 
+// TS: ": Provider" depois dos parênteses é o tipo de retorno; a função precisa devolver esse formato.
 function findByUrl(rawUrl: string): Provider {
   const { hostname } = parseUrl(rawUrl);
   const found = providers.find((provider) => provider.hosts.includes(hostname));
 
+  // TS: find() devolve Provider | undefined. Este if estreita o tipo: depois dele, found é só Provider.
   if (!found) {
     throw new UnsupportedPlatformError({
       message: `A plataforma "${hostname}" não é suportada.`,
