@@ -1,0 +1,69 @@
+{
+  "name": "iwdtfv",
+  "version": "1.0.0",
+  "description": "I want to download this fucking video: cole o link, escolha a qualidade e baixe.",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "typecheck": "tsc --noEmit",
+    "lint:prettier:check": "prettier --check .",
+    "lint:prettier:fix": "prettier --write .",
+    "lint:eslint:check-dir": "eslint .",
+    "lint:eslint:check-file": "eslint",
+    "test": "concurrently --names next,jest --hide next --kill-others --success command-jest \"YTDLP_BINARY=tests/fakes/yt-dlp.ts next dev\" \"jest --runInBand --verbose\"",
+    "test:watch": "jest --watchAll --runInBand --verbose",
+    "test:real": "TEST_REAL=1 concurrently --names next,jest --hide next --kill-others --success command-jest \"next dev\" \"jest --runInBand --verbose tests/_use-cases\"",
+    "prepare": "husky",
+    "commit": "cz"
+  },
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "joi": "18.1.2",
+    "next": "16.2.4",
+    "next-connect": "1.0.0",
+    "react": "19.2.5",
+    "react-dom": "19.2.5"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "20.5.2",
+    "@commitlint/config-conventional": "20.5.0",
+    "@secretlint/secretlint-rule-preset-recommend": "12.3.1",
+    "@types/async-retry": "1.4.9",
+    "@types/jest": "30.0.0",
+    "@types/node": "24.19.2",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "async-retry": "1.3.3",
+    "commitizen": "4.3.1",
+    "concurrently": "9.2.1",
+    "cz-conventional-changelog": "3.3.0",
+    "dotenv": "17.4.2",
+    "eslint": "9.39.2",
+    "eslint-config-next": "16.2.4",
+    "eslint-config-prettier": "10.1.8",
+    "eslint-plugin-jest": "29.15.2",
+    "eslint-plugin-prettier": "5.5.5",
+    "eslint-plugin-react": "7.37.5",
+    "eslint-plugin-react-hooks": "7.1.1",
+    "globals": "17.5.0",
+    "husky": "9.1.7",
+    "jest": "30.3.0",
+    "lint-staged": "16.4.0",
+    "prettier": "3.6.2",
+    "secretlint": "12.3.1",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.71.2"
+  },
+  "config": {
+    "commitizen": {
+      "path": "./node_modules/cz-conventional-changelog"
+    }
+  },
+  "engines": {
+    "node": "24"
+  }
+}
