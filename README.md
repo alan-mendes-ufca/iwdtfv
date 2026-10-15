@@ -100,6 +100,10 @@ YTDLP_COOKIES_FILE=/cookies/cookies.txt docker compose -f infra/compose.yaml up 
 
 Para atualizar o yt-dlp, mude `YTDLP_VERSION` e os checksums em `infra/Dockerfile` (eles estão no arquivo `SHA2-256SUMS` de cada release).
 
+## Expor para outros usuários
+
+As opções (rede local, Tailscale, Cloudflare Tunnel, VPS, PaaS, Vercel) e os cuidados antes de abrir o serviço estão em [docs/exposicao-do-servico.md](docs/exposicao-do-servico.md).
+
 ## Testes
 
 ```bash
