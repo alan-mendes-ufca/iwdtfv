@@ -123,3 +123,4 @@ cookies*.txt
 
 # Next.js
 next-env.d.ts
+cookies/

@@ -1,0 +1,22 @@
+services:
+  app:
+    container_name: "iwdtfv"
+    build:
+      context: ..
+      dockerfile: infra/Dockerfile
+    image: "iwdtfv:latest"
+    restart: unless-stopped
+    ports:
+      # Só na máquina local. Para expor na rede, troque o IP ou use um proxy reverso.
+      - "127.0.0.1:3000:3000"
+    environment:
+      # Ex.: YTDLP_COOKIES_FILE=/cookies/cookies.txt docker compose -f infra/compose.yaml up -d
+      YTDLP_COOKIES_FILE: ${YTDLP_COOKIES_FILE:-}
+      TRUST_PROXY: ${TRUST_PROXY:-0}
+    volumes:
+      # Coloque o cookies.txt em ./cookies na raiz do projeto (ignorado pelo git).
+      - "../cookies:/cookies:ro"
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL

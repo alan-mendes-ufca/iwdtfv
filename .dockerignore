@@ -1,0 +1,13 @@
+node_modules
+.next
+.git
+.github
+.husky
+.swc
+coverage
+tests
+cookies
+cookies*.txt
+*.cookies
+.env*.local
+npm-debug.log*
