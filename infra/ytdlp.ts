@@ -21,6 +21,7 @@ export type Selection = { type: "audio" } | { type: "video"; formatId: string };
 type RunOptions = {
   timeoutMs: number;
   signal?: AbortSignal;
+  binary?: string;
 };
 
 type RunResult = {
@@ -34,14 +35,14 @@ type BaseOptions = {
 };
 
 // Único ponto que executa o binário: sempre spawn(bin, args[]), nunca shell.
-function run(args: string[], { timeoutMs, signal }: RunOptions) {
+function run(args: string[], { timeoutMs, signal, binary }: RunOptions) {
   return new Promise<RunResult>((resolve, reject) => {
     if (signal?.aborted) {
       reject(abortError());
       return;
     }
 
-    const child = spawn(config.get().ytdlpBinary, args, {
+    const child = spawn(binary || config.get().ytdlpBinary, args, {
       shell: false,
       detached: true,
       stdio: ["ignore", "pipe", "pipe"],
@@ -185,7 +186,35 @@ function baseArgs(cookiesPath?: string | null) {
     "--no-color",
   ];
   if (cookiesPath) args.push("--cookies", cookiesPath);
+
+  // O YouTube exige um runtime JS; no Docker usamos o próprio Node.
+  const { jsRuntimes } = config.get();
+  if (jsRuntimes && /^[A-Za-z0-9_.,:/-]+$/.test(jsRuntimes)) {
+    args.push("--js-runtimes", jsRuntimes);
+  }
   return args;
+}
+
+// Versões para /api/v1/status; null quando o binário não responde.
+async function versions() {
+  const [ytdlpVersion, ffmpegVersion] = await Promise.all([
+    readVersion(["--version"]),
+    readVersion(["-version"], "ffmpeg"),
+  ]);
+
+  return {
+    ytdlp: ytdlpVersion,
+    ffmpeg: ffmpegVersion?.match(/ffmpeg version (\S+)/)?.[1] ?? ffmpegVersion,
+  };
+
+  async function readVersion(args: string[], binary?: string) {
+    try {
+      const { stdout } = await run(args, { timeoutMs: 10_000, binary });
+      return stdout.trim().split("\n")[0] || null;
+    } catch {
+      return null;
+    }
+  }
 }
 
 async function inspect(url: string, options: BaseOptions = {}) {
@@ -314,6 +343,7 @@ function parsePrinted(stdout: string) {
 }
 
 const ytdlp = {
+  versions,
   inspect,
   download,
 };

@@ -13,9 +13,9 @@
     "lint:prettier:fix": "prettier --write .",
     "lint:eslint:check-dir": "eslint .",
     "lint:eslint:check-file": "eslint",
-    "test": "concurrently --names next,jest --hide next --kill-others --success command-jest \"YTDLP_BINARY=tests/fakes/yt-dlp.ts next dev\" \"jest --runInBand --verbose\"",
+    "test": "YTDLP_BINARY=tests/fakes/yt-dlp.ts TEMP_DIR=/tmp/iwdtfv-test RATE_LIMIT_INSPECT_PER_MINUTE=1000 RATE_LIMIT_DOWNLOAD_PER_MINUTE=1000 MAX_CONCURRENT_DOWNLOADS=4 concurrently --names next,jest --hide next --kill-others --success command-jest \"next dev\" \"jest --runInBand --verbose\"",
     "test:watch": "jest --watchAll --runInBand --verbose",
-    "test:real": "TEST_REAL=1 concurrently --names next,jest --hide next --kill-others --success command-jest \"next dev\" \"jest --runInBand --verbose tests/_use-cases\"",
+    "test:real": "TEST_REAL=1 TEMP_DIR=/tmp/iwdtfv-real concurrently --names next,jest --hide next --kill-others --success command-jest \"next dev\" \"jest --runInBand --verbose tests/_use-cases\"",
     "prepare": "husky",
     "commit": "cz"
   },

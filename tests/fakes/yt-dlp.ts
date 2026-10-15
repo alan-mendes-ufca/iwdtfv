@@ -28,6 +28,11 @@ const stderrFixtures: Record<string, string> = {
 main();
 
 function main() {
+  if (args.includes("--version")) {
+    process.stdout.write("2026.08.19-fake\n");
+    return;
+  }
+
   if (url.includes("sleep")) {
     setTimeout(() => process.exit(0), 60_000);
     return;

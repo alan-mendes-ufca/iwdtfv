@@ -11,6 +11,7 @@ function get() {
   return {
     ytdlpBinary: process.env.YTDLP_BINARY || "yt-dlp",
     cookiesFile: process.env.YTDLP_COOKIES_FILE || null,
+    jsRuntimes: process.env.YTDLP_JS_RUNTIMES || null,
     tempDir: process.env.TEMP_DIR || path.join(os.tmpdir(), "iwdtfv"),
     maxDurationSeconds: readInteger("MAX_DURATION_SECONDS", 7200),
     maxFilesizeBytes: readInteger("MAX_FILESIZE_BYTES", 2 * 1024 ** 3),
